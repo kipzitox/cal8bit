@@ -32,6 +32,12 @@
     "plugins": [
       "expo-asset",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b65aa1e8-7377-4bd8-a910-a6a0fa47202c"
+      }
+    },
+    "owner": "mghtricks-team"
   }
 }
