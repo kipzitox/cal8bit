@@ -1,0 +1,45 @@
+# Dependencias
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+expo-server.log
+*.log
+
+# Carpetas nativas generadas (workflow gestionado - se regeneran con `npx expo prebuild --clean`)
+/android/
+/ios/
+
+# Build de Android
+*.apk
+*.aab
+.gradle/
+build/
+local.properties
+
+# Llaves y credenciales de firma
+*.jks
+*.keystore
+*.p8
+*.p12
+*.pem
+*.mobileprovision
+*.key
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
