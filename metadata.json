@@ -1,0 +1,6 @@
+{
+  "name": "CAL8BIT",
+  "description": "An 8-bit retro/cyber scientific calculator with themes, scanlines, memory history, and multiple languages.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
