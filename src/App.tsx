@@ -181,12 +181,20 @@ export default function App() {
   const T = THEMES[themeKey];
   const L = LANG[lang];
 
+  const audioCtxRef = React.useRef<AudioContext | null>(null);
+
   const playSound = (type: 'num' | 'op' | 'eq' | 'clear' | 'sci') => {
     if (!soundEnabled) return;
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
