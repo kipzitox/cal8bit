@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 
 const PIXEL_FONT = Platform.OS === 'web' ? 'Courier New, monospace' : 'monospace';
 
@@ -45,6 +46,7 @@ const LANG = {
     noMemory: 'SIN OPERACIONES',
     clearMem: 'BORRAR',
     result: 'RESULTADO',
+    sound: 'SONIDO',
   },
   en: {
     title: 'CAL8BIT',
@@ -76,6 +78,7 @@ const LANG = {
     noMemory: 'NO OPERATIONS',
     clearMem: 'CLEAR',
     result: 'RESULT',
+    sound: 'SOUND',
   },
 };
 
@@ -173,6 +176,7 @@ export default function App() {
   const [history, setHistory] = useState('');
   const [memory, setMemory] = useState([]);
   const [pendingFn, setPendingFn] = useState(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
   const [themeKey, setThemeKey] = useState('retro');
   const [lang, setLang] = useState('es');
@@ -185,6 +189,30 @@ export default function App() {
 
   const T = THEMES[themeKey];
   const L = LANG[lang];
+
+  const numPlayer = useAudioPlayer(require('./assets/sounds/num.wav'));
+  const opPlayer = useAudioPlayer(require('./assets/sounds/op.wav'));
+  const eqPlayer = useAudioPlayer(require('./assets/sounds/eq.wav'));
+  const clearPlayer = useAudioPlayer(require('./assets/sounds/clear.wav'));
+  const sciPlayer = useAudioPlayer(require('./assets/sounds/sci.wav'));
+
+  useEffect(() => {
+    (async () => {
+      try {
+        await setAudioModeAsync({ playsInSilentModeIOS: false, staysActiveInBackground: false, interruptionMode: 'duckOthers' });
+      } catch (e) {}
+    })();
+  }, []);
+
+  const playSound = (type) => {
+    if (!soundEnabled) return;
+    try {
+      const p = { num: numPlayer, op: opPlayer, eq: eqPlayer, clear: clearPlayer, sci: sciPlayer }[type];
+      if (!p) return;
+      p.seekTo(0);
+      p.play();
+    } catch (e) {}
+  };
 
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
@@ -247,18 +275,26 @@ export default function App() {
 
     const sciFns = ['sin', 'cos', 'tan', 'ln', 'log', '√', 'x²', 'n!', '|x|', '10ˣ', 'eˣ'];
     if (sciFns.includes(value)) {
+      playSound('sci');
       setPendingFn(value);
       setHistory(`${value}(`);
       setFresh(true);
       return;
     }
     if (value === 'π' || value === 'e') {
+      playSound('sci');
       setDisplay(formatNumber(value === 'π' ? Math.PI : Math.E));
       setHistory('');
       setFresh(true);
       return;
     }
-    if (value === '(' || value === ')') return;
+    if (value === '(' || value === ')') { playSound('num'); return; }
+
+    if (sciFns.includes(value)) playSound('sci');
+    else if (value === 'C' || value === '⌫') playSound('clear');
+    else if (value === '=') playSound('eq');
+    else if (['+', '-', '×', '÷', 'xⁿ', '%', '+/-'].includes(value)) playSound('op');
+    else playSound('num');
 
     switch (value) {
       case 'C':
@@ -371,12 +407,12 @@ export default function App() {
         <Text style={[styles.titleText, { color: T.greenDim, fontSize: sciMode ? 11 : 13 }]} numberOfLines={1}>
           {sciMode ? '▸ CAL8BIT SCI ◂' : `▸ ${L.title} ◂`}
         </Text>
-        <TouchableOpacity style={[styles.memBtn, { borderColor: T.greenDark }]} onPress={() => setShowMemory(true)} activeOpacity={0.7}>
+        <TouchableOpacity style={[styles.memBtn, { borderColor: T.greenDark }]} onPress={() => { playSound('sci'); setShowMemory(true); }} activeOpacity={0.7}>
           <Text style={[styles.memBtnText, { color: memory.length > 0 ? T.green : T.greenDim }]}>
             [{memory.length}]
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.settingsBtn, { borderColor: T.greenDark }]} onPress={() => setShowSettings(true)} activeOpacity={0.7}>
+        <TouchableOpacity style={[styles.settingsBtn, { borderColor: T.greenDark }]} onPress={() => { playSound('sci'); setShowSettings(true); }} activeOpacity={0.7}>
           <Text style={[styles.settingsBtnText, { color: T.greenDim }]}>[::]</Text>
         </TouchableOpacity>
       </View>
@@ -481,6 +517,7 @@ export default function App() {
               <Text style={[styles.sectionTitle, { color: T.greenDim }]}>▸ {L.display.toUpperCase()}</Text>
               <SettingToggle label={L.scanlines.toUpperCase()} value={showScanlines} onToggle={() => setShowScanlines(!showScanlines)} />
               <SettingToggle label={L.labels.toUpperCase()} value={showLabels} onToggle={() => setShowLabels(!showLabels)} />
+              <SettingToggle label={L.sound.toUpperCase()} value={soundEnabled} onToggle={() => setSoundEnabled(!soundEnabled)} />
 
               <Text style={[styles.sectionTitle, { color: T.greenDim }]}>▸ {L.buttons.toUpperCase()}</Text>
               <OptionSelector label={L.style.toUpperCase()} options={[{ label: L.square.toUpperCase(), value: 2 }, { label: L.soft.toUpperCase(), value: 8 }, { label: L.round.toUpperCase(), value: 20 }]} value={btnRadius} onSelect={setBtnRadius} />
@@ -517,7 +554,7 @@ export default function App() {
               ) : (
                 memory.map((item, i) => (
                   <TouchableOpacity key={`${item.ts}-${i}`} style={[styles.memItem, { borderBottomColor: T.greenDark }]} activeOpacity={0.7}
-                    onPress={() => { setDisplay(item.result); setShowMemory(false); setFresh(true); }}>
+                    onPress={() => { playSound('sci'); setDisplay(item.result); setShowMemory(false); setFresh(true); }}>
                     <Text style={[styles.memExpr, { color: T.greenDim }]} numberOfLines={1}>{item.expr}</Text>
                     <Text style={[styles.memResult, { color: T.green }]} numberOfLines={1}>= {item.result}</Text>
                   </TouchableOpacity>

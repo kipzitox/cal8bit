@@ -10,6 +10,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "expo": "~57.0.0",
+    "expo-audio": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "express": "^4.21.2",
     "lucide-react": "^1.33.0",

@@ -31,7 +31,8 @@
     },
     "plugins": [
       "expo-asset",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-audio"
     ],
     "extra": {
       "eas": {
